@@ -21,47 +21,24 @@ export class CorrespondenceService {
 
     async createCorrespondences(createCorrespondencesDto: CreateCorrespondencesDto): Promise<Correspondence[]> {
         const { course, competences } = createCorrespondencesDto
-        
-        const competencesPromises = competences.map(async (competence) => {
-            const result = await this.semanticAnalysisService.determineSimilarity({
+
+        const boundCompetences = []
+        competences.forEach(async (competence) => {
+            let result = (await this.semanticAnalysisService.determineSimilarity({
                 firstWordDict: course.course_key_words,
                 secondWordDict: competence.competence_key_words
-            });
-            const similarity = result.data.similarity;
-        
+            }))
+            let similarity = result.data.similarity
             if (similarity > +this.configService.get('SIMILARITY_UPPER_LIMIT')) {
-                return this.correspondenceRepository.createCorrespondence({
+                await this.correspondenceRepository.createCorrespondence({
                     course,
                     competence,
                     similarity
-                });
+                })
+                boundCompetences.push(competence)
             }
-
-            return Promise.resolve(null);
-        });
-
-        const result = await Promise.all(competencesPromises);
-        const createdCorrespondences = result.filter(correspondence => correspondence !== null);
-
-        return createdCorrespondences;
-
-        // const boundCompetences = []
-        // competences.forEach(async (competence) => {
-        //     let result = (await this.semanticAnalysisService.determineSimilarity({
-        //         firstWordDict: course.course_key_words,
-        //         secondWordDict: competence.competence_key_words
-        //     }))
-        //     let similarity = result.data.similarity
-        //     if (similarity > +this.configService.get('SIMILARITY_UPPER_LIMIT')) {
-        //         await this.correspondenceRepository.createCorrespondence({
-        //             course,
-        //             competence,
-        //             similarity
-        //         })
-        //         boundCompetences.push(competence)
-        //     }
-        // })
-        // return boundCompetences
+        })
+        return boundCompetences
     }
 
     async getCorrespondenceByIds(competenceId: string, courseId: string): Promise<Correspondence> {

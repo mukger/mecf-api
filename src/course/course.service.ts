@@ -54,7 +54,7 @@ export class CourseService {
             const keywords = keywordsRes.data
             const createdCourse = await this.coursesRepository.createCourse(addCourseDto, keywords)
             const competences = await this.competenceService.getAllCompetences()
-            await this.correspondenceService.createCorrespondences({course: createdCourse, competences})
+            this.correspondenceService.createCorrespondences({course: createdCourse, competences})
             return createdCourse
         } catch (error) { 
             if (+error.code === 23505) {
