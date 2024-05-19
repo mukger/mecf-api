@@ -5,13 +5,18 @@ import { Competence } from './competence.entity';
 import { AddCompetenceDto } from './dto/add-competence.dto';
 import { ChangeCompetenceDto } from './dto/change-competence.dto';
 import { SemanticAnalysisService } from 'src/semantic-analysis/semantic-analysis.service';
+import { Course } from 'src/course/course.entity';
+import { CorrespondenceService } from 'src/correspondence/correspondence.service';
+import { Correspondence } from 'src/correspondence/correspondence.entity';
+import { CorrespondenceMatrixDto } from './dto/correspondence-matrix.dto';
 
 @Injectable()
 export class CompetenceService {
     constructor(  
         @InjectRepository(CompetencesRepository)
         private readonly competencesRepository: CompetencesRepository,
-        private readonly semanticAnalysisService: SemanticAnalysisService
+        private readonly semanticAnalysisService: SemanticAnalysisService,
+        private readonly correspondenceService: CorrespondenceService,
     ) {} 
 
     async getAllCompetences(): Promise<Competence[]> {
@@ -26,16 +31,30 @@ export class CompetenceService {
         return competence
     }
 
+    async getCorrespondenceToCourseByIds(competenceId: string, courseId: string): Promise<Correspondence> {
+        return await this.correspondenceService.getCorrespondenceByIds(competenceId, courseId)
+    }
+
+    async getCorrespondencesById(competenceId: string): Promise<Correspondence[]> {
+        return await this.correspondenceService.getCorrespondencesByCompetenceId(competenceId)
+    }
+
+    async getCorrespondenceMatrixToCourseByIds(competenceId: string, courseId: string): Promise<CorrespondenceMatrixDto> {
+        const { course: {course_key_words}, competence: {competence_key_words} } = await this.correspondenceService.getCorrespondenceByIds(competenceId, courseId)
+        const result = await this.semanticAnalysisService.determineSimilarityMatrix({
+            firstWordDict: competence_key_words,
+            secondWordDict: course_key_words
+        })
+        return result.data
+    }
+
     async addCompetence(addCompetenceDto: AddCompetenceDto): Promise<Competence> {
         try {
-            const keywords = {
-                'some_word1': 1,
-                'some_word2': 1,
-                'some_word3': 1,
-                'some_word4': 1,
-                'some_word5': 1
-            }
-            //const keywords = await this.semanticAnalysisService.determineKeyWords(addCompetenceDto.competence_description)
+            const result = await this.semanticAnalysisService.determineKeyWords({
+                name: addCompetenceDto.competence_name,
+                materials: addCompetenceDto.competence_description
+            })
+            const keywords = result.data
             return await this.competencesRepository.createCompetence(addCompetenceDto, keywords)
         } catch (error) {
             if (+error.code === 23505) {
@@ -50,8 +69,8 @@ export class CompetenceService {
         competenceId: string,
         changeCompetenceDto: ChangeCompetenceDto
     ): Promise<Competence> {
+        await this.getCompetenceById(competenceId)
         try {
-            await this.getCompetenceById(competenceId)
             return await this.competencesRepository.changeCompetenceById(competenceId, changeCompetenceDto)
         } catch (error) {
             if (+error.code === 23505) {

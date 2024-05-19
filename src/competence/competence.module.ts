@@ -6,12 +6,14 @@ import { AuthModule } from 'src/auth/auth.module';
 import { Competence } from './competence.entity';
 import { CompetencesRepository } from './competence.repository';
 import { SemanticAnalysisModule } from 'src/semantic-analysis/semantic-analysis.module';
+import { CorrespondenceModule } from 'src/correspondence/correspondence.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Competence]),
     AuthModule,
-    SemanticAnalysisModule
+    SemanticAnalysisModule,
+    CorrespondenceModule
   ],
   providers: [CompetenceService, CompetencesRepository],
   controllers: [CompetenceController],

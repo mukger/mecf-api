@@ -1,11 +1,9 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Exclude } from "class-transformer";
 import { Correspondence } from "src/correspondence/correspondence.entity";
 
 @Entity()
 export class Course {
     @PrimaryGeneratedColumn('uuid')
-    @Exclude({toPlainOnly: true})
     id: string;
 
     @Column({unique: true, length: 255})

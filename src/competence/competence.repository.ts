@@ -33,7 +33,7 @@ export class CompetencesRepository extends Repository<Competence> {
         competenceId: string,
         changeCompetenceDto: ChangeCompetenceDto
     ): Promise<Competence> {
-        const competence = await this.findOneBy({id: competenceId})
+        const competence = await this.findOneBy({id: competenceId, ...changeCompetenceDto})
         if (!competence) {
             return undefined
         }

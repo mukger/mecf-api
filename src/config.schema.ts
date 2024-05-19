@@ -10,5 +10,6 @@ export const configValidationSchema = Joi.object({
     JWT_SECRET: Joi.string().required(),
     TOKEN_EXPIRATION_ACCESS: Joi.number().required(),
     TOKEN_EXPIRATION_REFRESH: Joi.number().required(),
-    SUBSID_API: Joi.string().required().uri()
+    SUBSID_API: Joi.string().required().uri(),
+    SIMILARITY_UPPER_LIMIT: Joi.number().required().min(0).max(1)
 })

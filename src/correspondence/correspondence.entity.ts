@@ -13,11 +13,11 @@ export class Correspondence {
     @Column({type: 'decimal', precision: 4, scale: 3})
     similarity: number;
 
-    @ManyToOne(() => Competence, (competence) => competence.competenceToCourse)
+    @ManyToOne(() => Competence, (competence) => competence.competenceToCourse, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'competence_id' })
     competence: Competence
 
-    @ManyToOne(() => Course, (course) => course.competenceToCourse)
+    @ManyToOne(() => Course, (course) => course.competenceToCourse, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'course_id' })
     course: Course
 }

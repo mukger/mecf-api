@@ -34,8 +34,8 @@ export class AuthService {
             const user = await this.usersRepository.createUser(signUpCredentialsDto)
             const { login } = signUpCredentialsDto
             const tokens = await this.formTokens(login, UsersRoles.USER)
-            res.cookie("accessToken", tokens.accessToken, { httpOnly: true })
-            res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true })
+            res.cookie("mesAccessToken", tokens.accessToken, { httpOnly: true })
+            res.cookie("mesRefreshToken", tokens.refreshToken, { httpOnly: true })
             await this.refreshSessionsRepository.createRefreshSession(
                 tokens.refreshToken,
                 user,
@@ -65,8 +65,8 @@ export class AuthService {
         if (user && (await bcrypt.compare(password, user.password))) {
             try {
                 const tokens = await this.formTokens(user.login, UsersRoles.USER)
-                res.cookie("accessToken", tokens.accessToken, { httpOnly: true })
-                res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true })
+                res.cookie("mesAccessToken", tokens.accessToken, { httpOnly: true })
+                res.cookie("mesRefreshToken", tokens.refreshToken, { httpOnly: true })
                 await this.refreshSessionsRepository.createRefreshSession(
                     tokens.refreshToken,
                     user,
@@ -86,8 +86,8 @@ export class AuthService {
         user: User,
         res: Response
     ): Promise<void> {
-        res.cookie("accessToken", "")
-        res.cookie("refreshToken", "")
+        res.cookie("mesAccessToken", "")
+        res.cookie("mesRefreshToken", "")
         await this.refreshSessionsRepository.deleteOldRefreshSession(user)
         return
     }
@@ -135,8 +135,8 @@ export class AuthService {
                 const tokens = await this.formTokens(login, found.role)
                 result.access_token = tokens.accessToken
                 result.refresh_token = tokens.refreshToken
-                res.cookie("accessToken", tokens.accessToken, { httpOnly: true })
-                res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true })
+                res.cookie("mesAccessToken", tokens.accessToken, { httpOnly: true })
+                res.cookie("mesRefreshToken", tokens.refreshToken, { httpOnly: true })
             }
             return result
         }
@@ -149,8 +149,8 @@ export class AuthService {
         user: User,
         res: Response
     ): Promise<void> {
-        res.cookie("accessToken", "")
-        res.cookie("refreshToken", "")
+        res.cookie("mesAccessToken", "")
+        res.cookie("mesRefreshToken", "")
         await this.refreshSessionsRepository.delete({id: Not(IsNull()), user: {id: user.id}})
         await this.usersRepository.remove(user)
         return
@@ -163,8 +163,8 @@ export class AuthService {
         try {
             await this.refreshSessionsRepository.deleteOldRefreshSession(user)
             const tokens = await this.formTokens(user.login, UsersRoles.USER)
-            res.cookie("accessToken", tokens.accessToken, { httpOnly: true })
-            res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true })
+            res.cookie("mesAccessToken", tokens.accessToken, { httpOnly: true })
+            res.cookie("mesRefreshToken", tokens.refreshToken, { httpOnly: true })
             await this.refreshSessionsRepository.createRefreshSession(
                 tokens.refreshToken,
                 user,

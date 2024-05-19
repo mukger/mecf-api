@@ -8,6 +8,8 @@ import { SemanticAnalysisService } from 'src/semantic-analysis/semantic-analysis
 import { CorrespondenceService } from 'src/correspondence/correspondence.service';
 import { CompetenceService } from 'src/competence/competence.service';
 import { Competence } from 'src/competence/competence.entity';
+import { Correspondence } from 'src/correspondence/correspondence.entity';
+import { GetCoursesByIdsDto } from './dto/get-courses-by-ids.dto';
 
 @Injectable()
 export class CourseService {
@@ -31,14 +33,30 @@ export class CourseService {
         return course
     }
 
+    async getCoursesByIds(getCorrespondencesById: GetCoursesByIdsDto): Promise<Course[]> {
+        const { ids } = getCorrespondencesById
+        const coursePromises = ids.map(id => this.getCourseById(id));
+        const result = await Promise.all(coursePromises);
+
+        return result
+    }
+
+    async getCorrespondencesById(courseId: string): Promise<Correspondence[]> {
+        return await this.correspondenceService.getCorrespondencesByCourseId(courseId)
+    }
+
     async addCourse(addCourseDto: AddCourseDto): Promise<Course> {
         try {
-            //const keywords = await this.semanticAnalysisService.determineKeyWords(addCompetenceDto.competence_description)
-            const createdCourse = await this.coursesRepository.createCourse(addCourseDto, {'some_word': 1})
+            const keywordsRes = await this.semanticAnalysisService.determineKeyWords({
+                name: addCourseDto.course_name,
+                materials: addCourseDto.course_materials
+            })
+            const keywords = keywordsRes.data
+            const createdCourse = await this.coursesRepository.createCourse(addCourseDto, keywords)
             const competences = await this.competenceService.getAllCompetences()
             await this.correspondenceService.createCorrespondences({course: createdCourse, competences})
             return createdCourse
-        } catch (error) {
+        } catch (error) { 
             if (+error.code === 23505) {
                 throw new ConflictException('This name is already taken')
             } else {
@@ -51,15 +69,38 @@ export class CourseService {
         courseId: string,
         changeCourseDto: ChangeCourseDto
     ): Promise<Course> {
+        const course = await this.getCourseById(courseId)
+        const { course_name, course_materials } = changeCourseDto
+        if ((!course_name && !course_materials) || (course.course_name === course_name && course.course_materials === course_materials)) {
+            return course
+        }
+
         try {
-            await this.getCourseById(courseId)
-            return await this.coursesRepository.changeCourseById(courseId, changeCourseDto)
+            await this.correspondenceService.deleteCorrespondencesToCourse(courseId)
+
+            const keywordsRes = await this.semanticAnalysisService.determineKeyWords({
+                name: course_name || course.course_name,
+                materials: course_materials || course.course_materials
+            })
+            const keywords = keywordsRes.data
+            const changedCourse = await this.coursesRepository.changeCourseById(courseId, changeCourseDto, keywords)
+            const competences = await this.competenceService.getAllCompetences() 
+            await this.correspondenceService.createCorrespondences({course: changedCourse, competences})
+
+            return changedCourse
         } catch (error) {
             if (+error.code === 23505) {
                 throw new ConflictException('This name is already taken')
             } else {
                 throw new InternalServerErrorException("Ooops... Something went wrong...")
             }
+        }
+    }
+
+    async deleteCourseById(courseId: string): Promise<void> {
+        const result = await this.coursesRepository.delete({id: courseId})
+        if (result.affected === 0) {
+            throw new NotFoundException("There is no course with this id")
         }
     }
 }

@@ -11,7 +11,13 @@ export class CoursesRepository extends Repository<Course> {
     }
 
     async getAllCourses(): Promise<Course[]> {
-        const query = this.createQueryBuilder('course')
+        const query = this.createQueryBuilder('course').select(
+            [
+             'course.id',
+             'course.course_name',
+             'course.course_key_words'
+            ]
+        )
         return query.getMany()
     }
 
@@ -25,13 +31,17 @@ export class CoursesRepository extends Repository<Course> {
 
     async changeCourseById(
         courseId: string,
-        changeCourseDto: ChangeCourseDto
+        changeCourseDto: ChangeCourseDto,
+        keywords: { [key: string]: number }
     ): Promise<Course> {
         const course = await this.findOneBy({id: courseId})
         if (!course) {
             return undefined
         }
         Object.assign(course, changeCourseDto)
+        if (keywords) {
+            course.course_key_words = keywords
+        }
         return this.save(course)
     }
 }

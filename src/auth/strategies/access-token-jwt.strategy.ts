@@ -11,7 +11,7 @@ import { TokenTypes } from "src/data/token-types";
 const jwtCookieExtractor = (req: {cookies: string[]}) => {
     let token = null;
     if (req && req.cookies) {
-        token = req.cookies['accessToken'];
+        token = req.cookies['mesAccessToken'];
     }
     return token;
 };
